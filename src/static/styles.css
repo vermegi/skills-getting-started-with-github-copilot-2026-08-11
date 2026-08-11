@@ -82,6 +82,15 @@ section h3 {
   background: linear-gradient(90deg, #eef1ff 0%, #f8f9ff 100%);
 }
 
+.waitlist-section {
+  margin-top: 12px;
+  padding: 12px;
+  border-left: 4px solid #9ca3af;
+  border-radius: 4px;
+  background-color: #f3f4f6;
+  color: #5f6b7a;
+}
+
 .participants-list {
   margin-top: 6px;
   padding-left: 0;
@@ -184,6 +193,12 @@ button:hover {
   background-color: #e8f5e9;
   color: #2e7d32;
   border: 1px solid #a5d6a7;
+}
+
+.waitlisted {
+  background-color: #fff8e1;
+  color: #8a5300;
+  border: 1px solid #ffe082;
 }
 
 .error {

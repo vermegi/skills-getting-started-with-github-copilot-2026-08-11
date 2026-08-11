@@ -25,55 +25,64 @@ activities = {
         "description": "Learn strategies and compete in chess tournaments",
         "schedule": "Fridays, 3:30 PM - 5:00 PM",
         "max_participants": 12,
-        "participants": ["michael@mergington.edu", "daniel@mergington.edu"]
+        "participants": ["michael@mergington.edu", "daniel@mergington.edu"],
+        "waitlist": []
     },
     "Programming Class": {
         "description": "Learn programming fundamentals and build software projects",
         "schedule": "Tuesdays and Thursdays, 3:30 PM - 4:30 PM",
         "max_participants": 20,
-        "participants": ["emma@mergington.edu", "sophia@mergington.edu"]
+        "participants": ["emma@mergington.edu", "sophia@mergington.edu"],
+        "waitlist": []
     },
     "Gym Class": {
         "description": "Physical education and sports activities",
         "schedule": "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM",
         "max_participants": 30,
-        "participants": ["john@mergington.edu", "olivia@mergington.edu"]
+        "participants": ["john@mergington.edu", "olivia@mergington.edu"],
+        "waitlist": []
     },
     "Basketball Team": {
         "description": "Competitive basketball practice and intramural games",
         "schedule": "Mondays and Wednesdays, 4:00 PM - 5:30 PM",
         "max_participants": 15,
-        "participants": ["james@mergington.edu"]
+        "participants": ["james@mergington.edu"],
+        "waitlist": []
     },
     "Soccer Club": {
         "description": "Soccer training and matches against other schools",
         "schedule": "Tuesdays and Thursdays, 4:00 PM - 5:30 PM",
         "max_participants": 18,
-        "participants": ["alex@mergington.edu", "jordan@mergington.edu"]
+        "participants": ["alex@mergington.edu", "jordan@mergington.edu"],
+        "waitlist": []
     },
     "Art Studio": {
         "description": "Painting, drawing, and visual arts creation",
         "schedule": "Wednesdays, 3:30 PM - 5:00 PM",
         "max_participants": 16,
-        "participants": ["isabella@mergington.edu"]
+        "participants": ["isabella@mergington.edu"],
+        "waitlist": []
     },
     "Music Ensemble": {
         "description": "Perform in orchestral and chamber music ensembles",
         "schedule": "Mondays and Fridays, 4:00 PM - 5:00 PM",
         "max_participants": 25,
-        "participants": ["lucas@mergington.edu", "grace@mergington.edu"]
+        "participants": ["lucas@mergington.edu", "grace@mergington.edu"],
+        "waitlist": []
     },
     "Debate Team": {
         "description": "Develop argumentative and public speaking skills",
         "schedule": "Tuesdays and Thursdays, 4:30 PM - 5:30 PM",
         "max_participants": 10,
-        "participants": ["sarah@mergington.edu"]
+        "participants": ["sarah@mergington.edu"],
+        "waitlist": []
     },
     "Science Club": {
         "description": "Explore scientific experiments and STEM projects",
         "schedule": "Wednesdays, 4:00 PM - 5:30 PM",
         "max_participants": 20,
-        "participants": ["marcus@mergington.edu", "avery@mergington.edu"]
+        "participants": ["marcus@mergington.edu", "avery@mergington.edu"],
+        "waitlist": []
     }
 }
 
@@ -99,12 +108,23 @@ def signup_for_activity(activity_name: str, email: str):
     activity = activities[activity_name]
 
     # Validate student is not already signed up
-    if email in activity["participants"]:
+    if email in activity["participants"] or email in activity["waitlist"]:
         raise HTTPException(status_code=400, detail="Student already signed up")
 
-    # Add student
+    if len(activity["participants"]) >= activity["max_participants"]:
+        activity["waitlist"].append(email)
+        position = len(activity["waitlist"])
+        return {
+            "message": f"Added {email} to the waitlist for {activity_name}",
+            "status": "waitlisted",
+            "position": position
+        }
+
     activity["participants"].append(email)
-    return {"message": f"Signed up {email} for {activity_name}"}
+    return {
+        "message": f"Signed up {email} for {activity_name}",
+        "status": "enrolled"
+    }
 
 
 @app.delete("/activities/{activity_name}/participants/{email}")
@@ -117,10 +137,19 @@ def unregister_from_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
-    # Validate student is signed up
-    if email not in activity["participants"]:
-        raise HTTPException(status_code=404, detail="Student is not signed up for this activity")
+    if email in activity["waitlist"]:
+        activity["waitlist"].remove(email)
+        return {"message": f"Removed {email} from the waitlist for {activity_name}"}
 
-    # Remove student
-    activity["participants"].remove(email)
-    return {"message": f"Unregistered {email} from {activity_name}"}
+    if email in activity["participants"]:
+        activity["participants"].remove(email)
+        promoted = None
+        if activity["waitlist"]:
+            promoted = activity["waitlist"].pop(0)
+            activity["participants"].append(promoted)
+        return {
+            "message": f"Unregistered {email} from {activity_name}",
+            "promoted": promoted
+        }
+
+    raise HTTPException(status_code=404, detail="Student is not signed up for this activity")
