@@ -12,6 +12,20 @@ def test_get_activities_returns_all_activities(client):
     assert "participants" in payload[expected_key]
 
 
+def test_get_activity_analytics_returns_per_activity_metrics(client):
+    # Act
+    response = client.get("/activities/analytics")
+    payload = response.json()
+
+    # Assert
+    assert response.status_code == 200
+    assert payload["Chess Club"] == {
+        "utilization_percentage": 16.67,
+        "remaining_seats": 10,
+        "total_participants": 2,
+    }
+
+
 def test_signup_for_activity_adds_participant(client):
     # Arrange
     activity_name = "Art Studio"

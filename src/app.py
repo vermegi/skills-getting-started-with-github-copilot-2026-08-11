@@ -88,6 +88,24 @@ def get_activities():
     return activities
 
 
+@app.get("/activities/analytics")
+def get_activity_analytics():
+    return {
+        name: {
+            "utilization_percentage": round(
+                len(details["participants"]) / details["max_participants"] * 100, 2
+            )
+            if details["max_participants"]
+            else 0,
+            "remaining_seats": max(
+                details["max_participants"] - len(details["participants"]), 0
+            ),
+            "total_participants": len(details["participants"]),
+        }
+        for name, details in activities.items()
+    }
+
+
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""

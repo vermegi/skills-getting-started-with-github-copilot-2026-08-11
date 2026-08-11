@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const analyticsList = document.getElementById("analytics-list");
   const defaultActivityOption = '<option value="">-- Select an activity --</option>';
 
   function showMessage(message, type) {
@@ -83,6 +84,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function fetchAnalytics() {
+    try {
+      const response = await fetch("/activities/analytics");
+      const analytics = await response.json();
+
+      analyticsList.innerHTML = "";
+
+      Object.entries(analytics).forEach(([name, details]) => {
+        const analyticsCard = document.createElement("article");
+        analyticsCard.className = "analytics-card";
+        analyticsCard.innerHTML = `
+          <h4>${name}</h4>
+          <p><strong>Utilization:</strong> ${details.utilization_percentage}%</p>
+          <p><strong>Participants:</strong> ${details.total_participants}</p>
+          <p><strong>Remaining seats:</strong> ${details.remaining_seats}</p>
+        `;
+        analyticsList.appendChild(analyticsCard);
+      });
+    } catch (error) {
+      analyticsList.innerHTML = "<p>Failed to load activity analytics.</p>";
+      console.error("Error fetching activity analytics:", error);
+    }
+  }
+
   // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -104,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showMessage(result.message, "success");
         signupForm.reset();
         fetchActivities();
+        fetchAnalytics();
       } else {
         showMessage(result.detail || "An error occurred", "error");
       }
@@ -139,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         showMessage(result.message, "success");
         fetchActivities();
+        fetchAnalytics();
       } else {
         showMessage(result.detail || "An error occurred", "error");
       }
@@ -150,4 +177,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+  fetchAnalytics();
 });
