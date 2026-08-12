@@ -97,6 +97,34 @@ def get_activities():
     return activities
 
 
+def activity_is_full(activity):
+    return len(activity["participants"]) >= activity["max_participants"]
+
+
+def add_to_waitlist(activity, email):
+    activity["waitlist"].append(email)
+    return len(activity["waitlist"])
+
+
+def waitlisted_signup_response(activity_name, email, position):
+    return {
+        "message": f"Added {email} to the waitlist for {activity_name}",
+        "status": "waitlisted",
+        "position": position
+    }
+
+
+def add_to_activity(activity, email):
+    activity["participants"].append(email)
+
+
+def enrolled_signup_response(activity_name, email):
+    return {
+        "message": f"Signed up {email} for {activity_name}",
+        "status": "enrolled"
+    }
+
+
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
@@ -111,20 +139,12 @@ def signup_for_activity(activity_name: str, email: str):
     if email in activity["participants"] or email in activity["waitlist"]:
         raise HTTPException(status_code=400, detail="Student already signed up")
 
-    if len(activity["participants"]) >= activity["max_participants"]:
-        activity["waitlist"].append(email)
-        position = len(activity["waitlist"])
-        return {
-            "message": f"Added {email} to the waitlist for {activity_name}",
-            "status": "waitlisted",
-            "position": position
-        }
+    if activity_is_full(activity):
+        position = add_to_waitlist(activity, email)
+        return waitlisted_signup_response(activity_name, email, position)
 
-    activity["participants"].append(email)
-    return {
-        "message": f"Signed up {email} for {activity_name}",
-        "status": "enrolled"
-    }
+    add_to_activity(activity, email)
+    return enrolled_signup_response(activity_name, email)
 
 
 @app.delete("/activities/{activity_name}/participants/{email}")
